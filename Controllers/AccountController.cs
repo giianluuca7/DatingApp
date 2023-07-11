@@ -25,7 +25,7 @@ namespace API.Controllers
         {
             if (await UserExists(registerDto.Username))
             {
-                return BadRequest("Username is taken");
+                return BadRequest("El nombre de usuario está ocupado");
             }
 
             using var hmac = new HMACSHA512();
