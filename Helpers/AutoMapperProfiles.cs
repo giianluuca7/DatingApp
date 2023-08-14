@@ -2,7 +2,6 @@ using API.DTOs;
 using API.Entities;
 using API.Extensions;
 using AutoMapper;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace API.Helpers
 {
@@ -15,6 +14,7 @@ namespace API.Helpers
             opt => opt.MapFrom(src => src.Photos.FirstOrDefault(x => x.IsMain).Url))
             .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.DateOfBirth.CalculateAge()));
             CreateMap<Photo, PhotoDto>();
+            CreateMap<MemberUpdateDTO, AppUser>();
         }
     }
 }
