@@ -1,6 +1,5 @@
-﻿using System.IO.Compression;
-using System.Security.Claims;
-using api.Extensions;
+﻿using api.Extensions;
+using api.Helpers;
 using api.Interfaces;
 using API.DTOs;
 using API.Entities;
@@ -27,9 +26,19 @@ namespace API.Controllers
             _mapper = mapper;
         }
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MemberDto>>> GetUsers()
+        public async Task<ActionResult<PagedList<MemberDto>>> GetUsers([FromQuery]UserParams userParams)
         {
-            var users = await _UserRepository.GetMembersAsync();
+            var currentUser = await _UserRepository.GetUserByUserNameAsync(User.GetUsername());
+            userParams.CurrentUsername = currentUser.UserName;
+
+            if(string.IsNullOrEmpty(userParams.Gender))
+            {
+                userParams.Gender = currentUser.Gender == "male" ? "female" : "male";
+            }
+
+            var users = await _UserRepository.GetMembersAsync(userParams);
+
+            Response.AddPaginationHeader(new PaginationHeader(users.CurrentPage, users.PageSize, users.TotalCount, users.TotalPages));
 
             return Ok(users);
         }
