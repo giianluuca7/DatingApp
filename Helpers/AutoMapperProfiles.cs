@@ -1,3 +1,5 @@
+using api.DTOs;
+using api.Entities;
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
@@ -16,6 +18,9 @@ namespace API.Helpers
             CreateMap<Photo, PhotoDto>();
             CreateMap<MemberUpdateDTO, AppUser>();
             CreateMap<RegisterDto, AppUser>();
+            CreateMap<Message, MessageDto>()
+            .ForMember(d => d.SenderPhotoUrl, o => o.MapFrom(s => s.Sender.Photos.FirstOrDefault(x => x.IsMain).Url))
+            .ForMember(d => d.RecipientPhotoUrl, o => o.MapFrom(s => s.Recipient.Photos.FirstOrDefault(x => x.IsMain).Url));
         }
     }
 }
