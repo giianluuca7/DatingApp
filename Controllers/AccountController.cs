@@ -7,21 +7,21 @@ using API.Entities;
 using Microsoft.AspNetCore.Mvc;
 using API.interfaces;
 using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 
 namespace API.Controllers
 {
     public class AccountController : BaseApiController
 
     {
-        public ITokenService _tokenService { get; }
-
-        private readonly DataContext _context;
+        public ITokenService _tokenService;
         private readonly IMapper _mapper;
-        public AccountController(DataContext context, ITokenService tokenService, IMapper mapper)
+        private readonly UserManager<AppUser> _userManager;
+        public AccountController(UserManager<AppUser> UserManager, ITokenService tokenService, IMapper mapper)
         {
             _mapper = mapper;
             _tokenService = tokenService;
-            _context = context;
+            _userManager = UserManager;
 
         }
         [HttpPost("register")] //POST: api/account/register
@@ -33,8 +33,9 @@ namespace API.Controllers
 
             user.UserName = registerDto.Username.ToLower();
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+
+            if(!result.Succeeded) return BadRequest(result.Errors);
 
             return new UserDto
             {
@@ -48,11 +49,15 @@ namespace API.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
         {
-            var user = await _context.Users
+            var user = await _userManager.Users
             .Include(p => p.Photos)
             .SingleOrDefaultAsync(x => x.UserName == loginDto.Username);
 
             if (user == null) return Unauthorized("Usuario inválido");
+
+            var result = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+
+            if(!result) return Unauthorized("Contraseña inválida");
 
             return new UserDto
             {
@@ -67,7 +72,7 @@ namespace API.Controllers
 
         private async Task<bool> UserExists(string username)
         {
-            return await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
+            return await _userManager.Users.AnyAsync(x => x.UserName == username.ToLower());
         }
     }
 }
